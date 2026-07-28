@@ -34,7 +34,7 @@ exports.getLogin = (req, res) => {
   res.render("login", { errors });
 };
 
-exports.getLogout = (req, res, next) => {
+exports.postLogout = (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
     res.redirect("/");
