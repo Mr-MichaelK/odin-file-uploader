@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Signup | Odin Files</title>
+  </head>
+  <body>
+    <h1>Signup</h1>
+
+    <% if (locals.errors && errors.length > 0) { %>
+        <ul>
+            <% errors.forEach(error => { %>
+                <li style="color: red;"><%= error.msg %></li>
+            <% }); %>
+        </ul>
+    <% } %>
+
+    <form action="/sign-up" method="post">
+      <div>
+        <label for="email">Email:</label>
+        <input
+          type="email"
+          name="email"
+          id="email"
+          value="<%= locals.formData?.email || '' %>"
+          required
+        />
+      </div>
+      <div>
+        <label for="password">Password:</label>
+        <input
+          type="password"
+          name="password"
+          id="password"
+          required
+        />
+      </div>
+      <div>
+        <label for="confirmPassword">Confirm Password:</label>
+        <input
+          type="password"
+          name="confirmPassword"
+          id="confirmPassword"
+          required
+        />
+      </div>
+      <button type="submit">Submit</button>
+    </form>
+
+    <br>
+    <a href="/login">Already have an account? Login here!</a>
+  </body>
+</html>
