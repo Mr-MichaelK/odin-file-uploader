@@ -16,7 +16,36 @@ async function findUserById(id) {
   return user;
 }
 
+async function createUser({ email, hashedPassword }) {
+  const user = await prisma.user.create({
+    data: {
+      email,
+      password: hashedPassword,
+      folders: {
+        create: {
+          name: "Root",
+        },
+      },
+    },
+    include: {
+      folders: true,
+    },
+  });
+
+  return user;
+}
+
+async function deleteUser(id) {
+  const deletedUser = await prisma.user.delete({
+    where: { id },
+  });
+
+  return deletedUser;
+}
+
 module.exports = {
   findUserByEmail,
   findUserById,
+  createUser,
+  deleteUser,
 };
