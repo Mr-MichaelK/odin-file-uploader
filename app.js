@@ -6,6 +6,8 @@ const prisma = require("./db/prisma.js");
 const passport = require("./config/passport");
 const { sessionSecret } = require("./config/environment");
 
+const authRouter = require("./routes/authRouter.js");
+
 const app = express();
 
 app.set("views", path.join(__dirname, "views"));
@@ -36,5 +38,7 @@ app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
+
+app.use("/", authRouter);
 
 module.exports = app;
