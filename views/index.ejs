@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odin Files | Secure Cloud Storage</title>
+  </head>
+  <body>
+    <header>
+      <h1>Odin Files</h1>
+      <p><em>Simple, fast, and secure personal file storage.</em></p>
+    </header>
+
+    <hr />
+
+    <main>
+      <section>
+        <h2>Your files, anywhere.</h2>
+        <p>
+          Organize your documents, store files in nested directories, and access your personal drive with built-in security and instant management.
+        </p>
+      </section>
+
+      <section>
+        <% if (locals.user) { %>
+          <div>
+            <h3>Welcome back!</h3>
+            <p>You are currently signed in as <strong><%= user.email %></strong>.</p>
+            <a href="/dashboard">
+              <button type="button">Go to Dashboard &rarr;</button>
+            </a>
+          </div>
+        <% } else { %>
+          <div>
+            <h3>Get Started</h3>
+            <p>Ready to upload? Sign in or create a new account to start managing your files.</p>
+            <p>
+              <a href="/login"><button type="button">Log In</button></a>
+              <a href="/sign-up"><button type="button">Sign Up</button></a>
+            </p>
+          </div>
+        <% } %>
+      </section>
+    </main>
+
+    <hr />
+
+    <footer>
+      <p><small>&copy; Odin Files. Built with Express, Prisma, and Passport.</small></p>
+    </footer>
+  </body>
+</html>
