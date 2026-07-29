@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const passport = require("passport");
-const db = require("../db/queries");
+const { findUserByEmail, createUser } = require("../services");
 const { body, validationResult } = require("express-validator");
 
 exports.validateSignUp = [

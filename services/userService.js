@@ -1,19 +1,15 @@
 const prisma = require("./prisma.js");
 
 async function findUserByEmail(email) {
-  const user = await prisma.user.findUnique({
+  return await prisma.user.findUnique({
     where: { email },
   });
-
-  return user;
 }
 
 async function findUserById(id) {
-  const user = await prisma.user.findUnique({
-    where: { id },
+  return await prisma.user.findUnique({
+    where: { id: Number(id) },
   });
-
-  return user;
 }
 
 async function createUser({ email, hashedPassword }) {
@@ -21,26 +17,27 @@ async function createUser({ email, hashedPassword }) {
     data: {
       email,
       password: hashedPassword,
-      folders: {
-        create: {
-          name: "Root",
-        },
-      },
-    },
-    include: {
-      folders: true,
     },
   });
 
-  return user;
+  await prisma.folder.create({
+    data: {
+      name: "Root",
+      ownerId: user.id,
+      url: `/uploads/users/${user.id}/`,
+    },
+  });
+
+  return await prisma.user.findUnique({
+    where: { id: user.id },
+    include: { folders: true },
+  });
 }
 
 async function deleteUser(id) {
-  const deletedUser = await prisma.user.delete({
-    where: { id },
+  return await prisma.user.delete({
+    where: { id: Number(id) },
   });
-
-  return deletedUser;
 }
 
 module.exports = {
