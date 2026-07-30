@@ -67,27 +67,29 @@ async function moveFolder({ folderId, ownerId, destinationFolderId }) {
     throw new Error("Cannot move a folder into itself.");
   }
 
-  const folderToMove = await getFolder({ id: targetFolderId, ownerId });
-  if (!folderToMove) {
-    throw new Error("Folder to move not found or unauthorized.");
-  }
-
-  if (folderToMove.parentId === null) {
-    throw new Error("Cannot move the Root folder.");
-  }
-
-  const destinationFolder = await getFolder({ id: targetDestId, ownerId });
-  if (!destinationFolder) {
-    throw new Error("Destination folder not found or unauthorized.");
-  }
-
   return await prisma.folder.update({
     where: { id: targetFolderId },
-    data: {
-      parentId: targetDestId,
-      url: `${destinationFolder.url}${folderToMove.name.toLowerCase().replace(/\s+/g, "-")}/`,
-    },
+    data: { parentId: targetDestId },
   });
+}
+
+async function getBreadcrumbs(folderId, ownerId) {
+  const crumbs = [];
+  let currentId = folderId;
+
+  while (currentId) {
+    const folder = await prisma.folder.findFirst({
+      where: { id: currentId, ownerId },
+      select: { id: true, name: true, parentId: true },
+    });
+
+    if (!folder) break;
+
+    crumbs.unshift({ id: folder.id, name: folder.name });
+    currentId = folder.parentId;
+  }
+
+  return crumbs;
 }
 
 module.exports = {
@@ -96,4 +98,5 @@ module.exports = {
   renameFolder,
   deleteFolder,
   moveFolder,
+  getBreadcrumbs,
 };
