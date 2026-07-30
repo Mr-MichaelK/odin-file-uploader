@@ -1,4 +1,4 @@
-const prisma = require("./prisma.js");
+const prisma = require("../db/prisma.js");
 const { getFolder } = require("./folderService.js");
 
 async function getFileFromFolder({ fileId, folderId, ownerId }) {

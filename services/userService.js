@@ -1,4 +1,4 @@
-const prisma = require("./prisma.js");
+const prisma = require("../db/prisma.js");
 
 async function findUserByEmail(email) {
   return await prisma.user.findUnique({
