@@ -23,6 +23,7 @@ model User {
   email    String   @unique @db.VarChar(255)
   password String
   folders  Folder[]
+  files    File[]
 }
 
 model Folder {
@@ -43,15 +44,18 @@ model Folder {
 model File {
   id        Int      @id @default(autoincrement())
   name      String
-  extension String
-  folder    Folder?  @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  folderId  Int?
-  createdAt DateTime @default(now())
-  access    Access   @default(PRIVATE)
-  url       String
   size      Int
+  path      String
+  access    Access   @default(PRIVATE)
+  createdAt DateTime @default(now())
 
-  @@unique([name, extension, folderId])
+  owner   User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId Int
+
+  folder   Folder? @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  folderId Int?
+
+  @@unique([name, folderId])
 }
 
 model Session {
