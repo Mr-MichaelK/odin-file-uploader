@@ -5,7 +5,8 @@ const { isAuth } = require("../middleware/auth");
 
 folderRouter.use(isAuth);
 
-folderRouter.get("/:id?", folderController.getFolder);
+folderRouter.get("/", folderController.getFolder);
+folderRouter.get("/:id", folderController.getFolder);
 
 folderRouter.post("/create", folderController.postCreateFolder);
 folderRouter.post("/rename", folderController.postRenameFolder);

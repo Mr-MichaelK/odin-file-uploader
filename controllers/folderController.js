@@ -5,28 +5,41 @@ const {
   moveFolder,
   deleteFolder,
   getBreadcrumbs,
+  getChildFolders,
+  getOrCreateRootFolder,
+  getValidMoveDestinations,
 } = require("../services");
 
 async function getFolder(req, res) {
-  const userId = req.user.id;
-  const folderId = req.params.id ? parseInt(req.params.id, 10) : null;
+  const ownerId = req.user.id;
+  const folderId = req.params.id;
 
-  if (req.params.id && isNaN(folderId)) {
-    return res.status(400).send("Invalid folder ID");
+  const rootFolder = await getOrCreateRootFolder(ownerId);
+
+  let currentFolder;
+  if (!folderId) {
+    currentFolder = rootFolder;
+  } else {
+    currentFolder = await getFolderFromDb({ id: folderId, ownerId });
+    if (!currentFolder) {
+      const error = new Error("Folder not found or unauthorized access.");
+      error.status = 404;
+      throw error;
+    }
   }
 
-  const folder = await getFolderFromDb({ id: folderId, ownerId: userId });
-
-  if (!folder) {
-    return res.status(404).send("Folder not found");
-  }
-
-  const breadcrumbs = await getBreadcrumbs({ folderId, ownerId: userId });
+  const [folders, validDestinations, breadcrumbs] = await Promise.all([
+    getChildFolders({ parentId: currentFolder.id, ownerId }),
+    getValidMoveDestinations({ folderId: currentFolder.id, ownerId }),
+    getBreadcrumbs(currentFolder.id, ownerId),
+  ]);
 
   res.render("folders/show", {
-    folder,
-    subfolders: folder.children,
-    files: folder.files,
+    currentFolder,
+    rootFolder,
+    folders,
+    validDestinations,
+    files: [],
     breadcrumbs,
   });
 }
@@ -51,7 +64,7 @@ async function postCreateFolder(req, res) {
     return res.status(500).send("Error creating folder");
   }
 
-  const redirectUrl = parentId ? `/folders/${parentId}` : "/dashboard";
+  const redirectUrl = parentId ? `/folders/${parentId}` : "/folders";
   res.redirect(redirectUrl);
 }
 
@@ -82,31 +95,22 @@ async function postMoveFolder(req, res) {
   const userId = req.user.id;
   const { folderId, destinationFolderId } = req.body;
 
-  const parsedFolderId = parseInt(folderId, 10);
-  const parsedDestId = destinationFolderId
-    ? parseInt(destinationFolderId, 10)
-    : null;
+  const parsedFolderId = Number(folderId);
+  const parsedDestId = Number(destinationFolderId);
 
-  if (isNaN(parsedFolderId) || (destinationFolderId && isNaN(parsedDestId))) {
-    return res.status(400).send("Invalid folder IDs provided.");
+  if (!parsedFolderId || !parsedDestId) {
+    const error = new Error("Invalid folder IDs provided.");
+    error.status = 400;
+    throw error;
   }
 
-  if (parsedFolderId === parsedDestId) {
-    return res.status(400).send("Cannot move a folder into itself.");
-  }
-
-  const updatedFolder = await moveFolder({
+  await moveFolder({
     folderId: parsedFolderId,
     ownerId: userId,
     destinationFolderId: parsedDestId,
   });
 
-  if (!updatedFolder) {
-    return res.status(404).send("Folder not found or unauthorized");
-  }
-
-  const redirectUrl = parsedDestId ? `/folders/${parsedDestId}` : "/dashboard";
-  res.redirect(redirectUrl);
+  res.redirect(`/folders/${parsedDestId}`);
 }
 
 async function postDeleteFolder(req, res) {
@@ -127,7 +131,7 @@ async function postDeleteFolder(req, res) {
 
   const redirectUrl = folder.parentId
     ? `/folders/${folder.parentId}`
-    : "/dashboard";
+    : "/folders";
   res.redirect(redirectUrl);
 }
 

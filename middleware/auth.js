@@ -9,5 +9,5 @@ exports.isGuest = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return next();
   }
-  res.redirect("/dashboard");
+  res.redirect("/folders");
 };

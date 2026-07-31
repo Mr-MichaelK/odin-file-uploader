@@ -15,6 +15,8 @@ const app = express();
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
 
+app.use(express.static(path.join(__dirname, "public")));
+
 app.use(express.urlencoded({ extended: false }));
 
 app.use(
@@ -43,6 +45,6 @@ app.use((req, res, next) => {
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
-app.use("/dashboard", folderRouter);
+app.use("/folders", folderRouter);
 
 module.exports = app;

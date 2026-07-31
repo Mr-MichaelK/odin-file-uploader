@@ -24,7 +24,6 @@ async function createUser({ email, hashedPassword }) {
     data: {
       name: "Root",
       ownerId: user.id,
-      url: `/uploads/users/${user.id}/`,
     },
   });
 

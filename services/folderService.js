@@ -11,6 +11,41 @@ async function getFolder({ id, ownerId }) {
   });
 }
 
+async function getOrCreateRootFolder(ownerId) {
+  const numericOwnerId = Number(ownerId);
+
+  let root = await prisma.folder.findFirst({
+    where: {
+      ownerId: numericOwnerId,
+      parentId: null,
+    },
+  });
+
+  if (!root) {
+    root = await prisma.folder.create({
+      data: {
+        name: "Home",
+        ownerId: numericOwnerId,
+        parentId: null,
+      },
+    });
+  }
+
+  return root;
+}
+
+async function getChildFolders({ parentId, ownerId }) {
+  return await prisma.folder.findMany({
+    where: {
+      ownerId: Number(ownerId),
+      parentId: Number(parentId),
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+}
+
 async function createFolder({ ownerId, parentId, name }) {
   const parentFolder = parentId
     ? await getFolder({ id: parentId, ownerId })
@@ -25,7 +60,6 @@ async function createFolder({ ownerId, parentId, name }) {
       name,
       ownerId: Number(ownerId),
       parentId: parentId ? Number(parentId) : null,
-      url: folderUrl,
     },
   });
 }
@@ -67,6 +101,25 @@ async function moveFolder({ folderId, ownerId, destinationFolderId }) {
     throw new Error("Cannot move a folder into itself.");
   }
 
+  const [sourceFolder, destFolder] = await Promise.all([
+    getFolder({ id: targetFolderId, ownerId }),
+    getFolder({ id: targetDestId, ownerId }),
+  ]);
+
+  if (!sourceFolder || !destFolder) {
+    throw new Error("Source or destination folder not found or unauthorized.");
+  }
+
+  const validDestinations = await getValidMoveDestinations({
+    folderId: targetFolderId,
+    ownerId,
+  });
+  const isValid = validDestinations.some((d) => d.id === targetDestId);
+
+  if (!isValid) {
+    throw new Error("Cannot move a folder into one of its own subfolders.");
+  }
+
   return await prisma.folder.update({
     where: { id: targetFolderId },
     data: { parentId: targetDestId },
@@ -75,11 +128,12 @@ async function moveFolder({ folderId, ownerId, destinationFolderId }) {
 
 async function getBreadcrumbs(folderId, ownerId) {
   const crumbs = [];
-  let currentId = folderId;
+  let currentId = Number(folderId);
+  const numericOwnerId = Number(ownerId);
 
   while (currentId) {
     const folder = await prisma.folder.findFirst({
-      where: { id: currentId, ownerId },
+      where: { id: currentId, ownerId: numericOwnerId },
       select: { id: true, name: true, parentId: true },
     });
 
@@ -92,11 +146,47 @@ async function getBreadcrumbs(folderId, ownerId) {
   return crumbs;
 }
 
+async function getValidMoveDestinations({ folderId, ownerId }) {
+  const targetId = Number(folderId);
+
+  const allFolders = await prisma.folder.findMany({
+    where: { ownerId: Number(ownerId) },
+    select: { id: true, name: true, parentId: true },
+  });
+
+  const childrenMap = new Map();
+  for (const folder of allFolders) {
+    if (folder.parentId) {
+      if (!childrenMap.has(folder.parentId)) {
+        childrenMap.set(folder.parentId, []);
+      }
+      childrenMap.get(folder.parentId).push(folder.id);
+    }
+  }
+
+  const descendantIds = new Set([targetId]);
+  const queue = [targetId];
+
+  while (queue.length > 0) {
+    const currentId = queue.shift();
+    const children = childrenMap.get(currentId) || [];
+    for (const childId of children) {
+      descendantIds.add(childId);
+      queue.push(childId);
+    }
+  }
+
+  return allFolders.filter((folder) => !descendantIds.has(folder.id));
+}
+
 module.exports = {
   getFolder,
+  getOrCreateRootFolder,
+  getChildFolders,
   createFolder,
   renameFolder,
   deleteFolder,
   moveFolder,
   getBreadcrumbs,
+  getValidMoveDestinations,
 };
