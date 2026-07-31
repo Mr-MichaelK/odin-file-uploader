@@ -35,6 +35,12 @@
             <input type="text" name="folderName" placeholder="New folder name..." required class="form-input input-sm">
             <button type="submit" class="btn btn-primary btn-sm">+ New Folder</button>
           </form>
+
+          <form action="/files/upload" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="parentFolderId" value="<%= currentFolder ? currentFolder.id : '' %>">
+            <input type="file" name="file" />
+            <button type="submit" class="btn btn-primary btn-sm">+ Upload</button>
+          </form>
         </div>
       </div>
 
