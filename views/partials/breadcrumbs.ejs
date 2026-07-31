@@ -1,0 +1,28 @@
+<nav class="breadcrumbs-bar">
+  <div class="breadcrumbs-list">
+    <% breadcrumbs.forEach((crumb, index) => { %>
+      <% const isLast = index === breadcrumbs.length - 1; %>
+      
+      <div class="breadcrumb-item <%= isLast ? 'active' : '' %>">
+        <% if (isLast) { %>
+          <span class="crumb-name">
+            <svg class="icon-folder" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+              <path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h3.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A.5.5 0 0 0 9.586 3H12.5A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-9z"/>
+            </svg>
+            <%= crumb.name %>
+          </span>
+        <% } else { %>
+          <a href="<%= crumb.id ? '/folders/' + crumb.id : '/folders' %>" class="crumb-link">
+            <% if (index === 0) { %>
+              <svg class="icon-home" viewBox="0 0 16 16" width="16" height="16" fill="currentColor">
+                <path d="M8.354 1.146a.5.5 0 0 0-.708 0l-6 6A.5.5 0 0 0 1.5 7.5v7a.5.5 0 0 0 .5.5h4.5a.5.5 0 0 0 .5-.5v-4h2v4a.5.5 0 0 0 .5.5H14a.5.5 0 0 0 .5-.5v-7a.5.5 0 0 0-.146-.354L8.354 1.146z"/>
+              </svg>
+            <% } %>
+            <%= crumb.name %>
+          </a>
+          <span class="crumb-separator">/</span>
+        <% } %>
+      </div>
+    <% }) %>
+  </div>
+</nav>
