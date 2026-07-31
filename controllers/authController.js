@@ -1,6 +1,6 @@
 const bcrypt = require("bcryptjs");
 const passport = require("passport");
-const db = require("../db/queries");
+const { findUserByEmail, createUser } = require("../services");
 const { body, validationResult } = require("express-validator");
 
 exports.validateSignUp = [
@@ -10,7 +10,7 @@ exports.validateSignUp = [
     .withMessage("Must be a valid email address.")
     .normalizeEmail()
     .custom(async (value) => {
-      const user = await db.findUserByEmail(value);
+      const user = await findUserByEmail(value);
       if (user) throw new Error("E-mail already in use.");
     }),
   body("password")
@@ -53,7 +53,7 @@ exports.postSignUp = async (req, res, next) => {
   const { email, password } = req.body;
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const user = await db.createUser({ email, hashedPassword });
+  const user = await createUser({ email, hashedPassword });
 
   req.login(user, (err) => {
     if (err) return next(err);
@@ -62,7 +62,7 @@ exports.postSignUp = async (req, res, next) => {
 };
 
 exports.postLogin = passport.authenticate("local", {
-  successRedirect: "/dashboard",
+  successRedirect: "/folders",
   failureRedirect: "/login",
   failureMessage: true,
 });

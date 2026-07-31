@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= currentFolder ? currentFolder.name : 'Dashboard' %> - Odin Files</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header / Navbar -->
+    <header class="app-header">
+      <div class="brand">
+        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+          <path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h3.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A.5.5 0 0 0 9.586 3H12.5A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-9z"/>
+        </svg>
+        <span>Odin Files</span>
+      </div>
+      <form action="/logout" method="post">
+        <button type="submit" class="btn btn-outline btn-sm">Log out</button>
+      </form>
+    </header>
+
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="view-header">
+        <%- include('../partials/breadcrumbs', { breadcrumbs }) %>
+
+        <div class="action-buttons">
+          <!-- New Folder Form (Inline Dialog trigger or simple button) -->
+          <form action="/folders/create" method="POST" class="inline-form">
+            <input type="hidden" name="parentFolderId" value="<%= currentFolder ? currentFolder.id : '' %>">
+            <input type="text" name="folderName" placeholder="New folder name..." required class="form-input input-sm">
+            <button type="submit" class="btn btn-primary btn-sm">+ New Folder</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- File & Folder List Container (GitHub Style Box) -->
+      <div class="box-container">
+        
+        <!-- Box Header -->
+        <div class="box-header">
+          <span class="box-title">Name</span>
+          <span class="box-meta">Actions</span>
+        </div>
+
+        <!-- Box Body / Items -->
+        <ul class="item-list">
+          
+          <!-- Render Child Folders -->
+          <% if (folders && folders.length > 0) { %>
+            <% folders.forEach(folder => { %>
+              <li class="item-row">
+                <div class="item-main">
+                  <svg class="icon-folder-filled" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="#54a3ff" d="M2 2.5A1.5 1.5 0 0 1 3.5 1h3.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A.5.5 0 0 0 9.586 3H12.5A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-9z"/>
+                  </svg>
+                  <a href="/folders/<%= folder.id %>" class="item-name">
+                    <%= folder.name %>
+                  </a>
+                </div>
+
+                <!-- Row Quick Actions -->
+                <div class="item-actions">
+                  <!-- Move Trigger Button -->
+                  <button 
+                    type="button" 
+                    class="btn-icon" 
+                    title="Move Folder"
+                    onclick="document.getElementById('move-folder-modal-<%= folder.id %>').showModal()"
+                  >
+                    📦
+                  </button>
+
+                  <!-- Rename Form -->
+                  <form action="/folders/rename" method="POST" class="inline-form">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    <input type="text" name="newName" value="<%= folder.name %>" required class="form-input input-xs">
+                    <button type="submit" class="btn-icon" title="Rename">✏️</button>
+                  </form>
+
+                  <!-- Delete Form -->
+                  <form action="/folders/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this folder and everything inside?');">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    <button type="submit" class="btn-icon danger" title="Delete">🗑️</button>
+                  </form>
+                </div>
+
+                <!-- Move Folder Modal Dialog -->
+                <dialog id="move-folder-modal-<%= folder.id %>" class="move-modal">
+                  <form action="/folders/move" method="POST" class="modal-form">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    
+                    <h3>Move "<%= folder.name %>"</h3>
+                    
+                    <label for="destinationFolderId-<%= folder.id %>">Select destination:</label>
+                    <select name="destinationFolderId" id="destinationFolderId-<%= folder.id %>" required class="form-input">
+                      <!-- Root Folder Option -->
+                      <option value="<%= rootFolder.id %>">/ (Home)</option>
+                      
+                      <!-- Other Available Folders -->
+                      <% validDestinations.filter(d => d.id !== folder.id).forEach(dest => { %>
+                        <option value="<%= dest.id %>">
+                          /<%= dest.name %>
+                        </option>
+                      <% }) %>
+                    </select>
+
+                    <div class="modal-buttons">
+                      <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('move-folder-modal-<%= folder.id %>').close()">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-primary">Move Here</button>
+                    </div>
+                  </form>
+                </dialog>
+              </li>
+            <% }) %>
+          <% } %>
+
+          <!-- Empty State -->
+          <% if ((!folders || folders.length === 0) && (!files || files.length === 0)) { %>
+            <li class="empty-state">
+              <p>This folder is empty.</p>
+            </li>
+          <% } %>
+        
+        </ul>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

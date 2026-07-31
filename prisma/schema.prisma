@@ -32,7 +32,6 @@ model Folder {
   owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   files     File[]
   createdAt DateTime @default(now())
-  url       String?
   access    Access   @default(PRIVATE)
   parentId  Int?
   parent    Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
@@ -49,7 +48,7 @@ model File {
   folderId  Int?
   createdAt DateTime @default(now())
   access    Access   @default(PRIVATE)
-  url       String?
+  url       String
   size      Int
 
   @@unique([name, extension, folderId])

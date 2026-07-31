@@ -8,11 +8,14 @@ const { sessionSecret } = require("./config/environment");
 
 const authRouter = require("./routes/authRouter.js");
 const indexRouter = require("./routes/indexRouter.js");
+const folderRouter = require("./routes/folderRouter.js");
 
 const app = express();
 
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
+
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.urlencoded({ extended: false }));
 
@@ -42,5 +45,6 @@ app.use((req, res, next) => {
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
+app.use("/folders", folderRouter);
 
 module.exports = app;
