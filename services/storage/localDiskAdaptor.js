@@ -36,6 +36,31 @@ class LocalDiskAdapter {
       }
     }
   }
+
+  getReadStream(filePath) {
+    if (!existsSync(filePath)) {
+      const error = new Error("File missing on disk storage.");
+      error.status = 404;
+      throw error;
+    }
+    return createReadStream(filePath);
+  }
+
+  async moveFile(oldPath, newPath) {
+    try {
+      const destDir = path.dirname(newPath);
+      await fs.mkdir(destDir, { recursive: true });
+
+      await fs.rename(oldPath, newPath);
+      return { path: newPath };
+    } catch (err) {
+      console.error(
+        `LocalDiskAdapter: Failed to move/rename file from ${oldPath} to ${newPath}`,
+        err,
+      );
+      throw err;
+    }
+  }
 }
 
 module.exports = new LocalDiskAdapter();

@@ -39,7 +39,7 @@ async function getFolder(req, res) {
     rootFolder,
     folders,
     validDestinations,
-    files: [],
+    files: currentFolder.files,
     breadcrumbs,
   });
 }

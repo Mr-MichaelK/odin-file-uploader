@@ -8,6 +8,9 @@ async function getFolder({ id, ownerId }) {
       id: Number(id),
       ownerId: Number(ownerId),
     },
+    include: {
+      files: true,
+    },
   });
 }
 
@@ -18,6 +21,9 @@ async function getOrCreateRootFolder(ownerId) {
     where: {
       ownerId: numericOwnerId,
       parentId: null,
+    },
+    include: {
+      files: true,
     },
   });
 
