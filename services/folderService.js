@@ -153,16 +153,22 @@ async function getBreadcrumbs(folderId, ownerId) {
 }
 
 async function getValidMoveDestinations({ folderId, ownerId }) {
-  const targetId = Number(folderId);
-
   const allFolders = await prisma.folder.findMany({
     where: { ownerId: Number(ownerId) },
     select: { id: true, name: true, parentId: true },
   });
 
+  const rootFolder = allFolders.find((f) => f.parentId === null);
+
+  if (!folderId || (rootFolder && Number(folderId) === rootFolder.id)) {
+    return allFolders.filter((f) => f.parentId !== null);
+  }
+
+  const targetId = Number(folderId);
+
   const childrenMap = new Map();
   for (const folder of allFolders) {
-    if (folder.parentId) {
+    if (folder.parentId !== null) {
       if (!childrenMap.has(folder.parentId)) {
         childrenMap.set(folder.parentId, []);
       }
@@ -182,7 +188,9 @@ async function getValidMoveDestinations({ folderId, ownerId }) {
     }
   }
 
-  return allFolders.filter((folder) => !descendantIds.has(folder.id));
+  return allFolders.filter(
+    (folder) => folder.parentId !== null && !descendantIds.has(folder.id),
+  );
 }
 
 module.exports = {

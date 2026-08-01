@@ -9,6 +9,7 @@ const { sessionSecret } = require("./config/environment");
 const authRouter = require("./routes/authRouter.js");
 const indexRouter = require("./routes/indexRouter.js");
 const folderRouter = require("./routes/folderRouter.js");
+const fileRouter = require("./routes/fileRouter.js");
 
 const app = express();
 
@@ -46,5 +47,6 @@ app.use((req, res, next) => {
 app.use("/", indexRouter);
 app.use("/", authRouter);
 app.use("/folders", folderRouter);
+app.use("/files", fileRouter);
 
 module.exports = app;

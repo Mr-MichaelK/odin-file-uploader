@@ -1,4 +1,10 @@
-const { createFileInFolder } = require("../services");
+const {
+  createFileInFolder,
+  getFile,
+  renameFile,
+  deleteFile,
+  moveFileToFolder,
+} = require("../services");
 const storageAdapter = require("../services/storage/localDiskAdapter.js");
 
 async function postUploadFile(req, res) {
@@ -24,7 +30,7 @@ async function getDownloadFile(req, res) {
   const fileId = req.params.id;
   const ownerId = req.user.id;
 
-  const file = await fileService.getFile({ fileId, ownerId });
+  const file = await getFile({ fileId, ownerId });
 
   res.setHeader(
     "Content-Disposition",
@@ -40,7 +46,7 @@ async function postRenameFile(req, res) {
   const ownerId = req.user.id;
   const { newName } = req.body;
 
-  const updatedFile = await fileService.renameFile({
+  const updatedFile = await renameFile({
     fileId,
     ownerId,
     newName,
@@ -53,9 +59,23 @@ async function postDeleteFile(req, res) {
   const fileId = req.params.id;
   const ownerId = req.user.id;
 
-  const deletedFile = await fileService.deleteFile({ fileId, ownerId });
+  const deletedFile = await deleteFile({ fileId, ownerId });
 
   res.redirect(`/folders/${deletedFile.folderId}`);
+}
+
+async function postMoveFile(req, res) {
+  const fileId = req.params.id;
+  const ownerId = req.user.id;
+  const { destinationFolderId } = req.body;
+
+  const updatedFile = await moveFileToFolder({
+    fileId,
+    destinationFolderId,
+    ownerId,
+  });
+
+  res.redirect(`/folders/${updatedFile.folderId}`);
 }
 
 module.exports = {
@@ -63,4 +83,5 @@ module.exports = {
   getDownloadFile,
   postRenameFile,
   postDeleteFile,
+  postMoveFile,
 };
