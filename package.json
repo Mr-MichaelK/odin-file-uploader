@@ -17,5 +17,10 @@
   },
   "devDependencies": {
     "prisma": "^7.9.1"
+  },
+  "scripts": {
+    "postinstall": "prisma generate",
+    "build": "prisma generate && prisma migrate deploy",
+    "start": "node server.js"
   }
 }
