@@ -5,7 +5,7 @@ const {
   deleteFile,
   moveFileToFolder,
 } = require("../services");
-const storageAdapter = require("../services/storage/localDiskAdapter.js");
+const storageAdapter = require("../services/storage/supabaseStorageAdapter");
 
 async function postUploadFile(req, res) {
   const ownerId = req.user.id;
@@ -37,7 +37,7 @@ async function getDownloadFile(req, res) {
     `attachment; filename="${encodeURIComponent(file.name)}"`,
   );
 
-  const stream = storageAdapter.getReadStream(file.path);
+  const stream = await storageAdapter.getReadStream(file.path);
   stream.pipe(res);
 }
 

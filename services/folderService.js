@@ -1,4 +1,35 @@
 const prisma = require("../db/prisma.js");
+const storageAdapter = require("./storage/supabaseStorageAdapter");
+
+async function getAllDescendantFilePaths(folderId, ownerId) {
+  const numericFolderId = Number(folderId);
+  const numericOwnerId = Number(ownerId);
+
+  const files = await prisma.file.findMany({
+    where: {
+      folderId: numericFolderId,
+      ownerId: numericOwnerId,
+    },
+    select: { path: true },
+  });
+
+  let paths = files.map((f) => f.path);
+
+  const subfolders = await prisma.folder.findMany({
+    where: {
+      parentId: numericFolderId,
+      ownerId: numericOwnerId,
+    },
+    select: { id: true },
+  });
+
+  for (const subfolder of subfolders) {
+    const childPaths = await getAllDescendantFilePaths(subfolder.id, ownerId);
+    paths = paths.concat(childPaths);
+  }
+
+  return paths;
+}
 
 async function getFolder({ id, ownerId }) {
   if (!id || !ownerId) return null;
@@ -92,6 +123,12 @@ async function deleteFolder({ id, ownerId }) {
 
   if (folder.parentId === null) {
     throw new Error("Cannot delete the root folder.");
+  }
+
+  const pathsToDelete = await getAllDescendantFilePaths(folder.id, ownerId);
+
+  if (pathsToDelete.length > 0) {
+    await storageAdapter.deleteFile(pathsToDelete);
   }
 
   return await prisma.folder.delete({

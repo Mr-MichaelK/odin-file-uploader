@@ -1,6 +1,6 @@
 const prisma = require("../db/prisma.js");
 const { getFolder } = require("./folderService.js");
-const storageAdapter = require("./storage/localDiskAdapter.js");
+const storageAdapter = require("./storage/supabaseStorageAdapter.js");
 
 async function getFile({ fileId, ownerId }) {
   const file = await prisma.file.findFirst({
