@@ -1,4 +1,35 @@
 const prisma = require("../db/prisma.js");
+const storageAdapter = require("./storage/supabaseStorageAdapter");
+
+async function getAllDescendantFilePaths(folderId, ownerId) {
+  const numericFolderId = Number(folderId);
+  const numericOwnerId = Number(ownerId);
+
+  const files = await prisma.file.findMany({
+    where: {
+      folderId: numericFolderId,
+      ownerId: numericOwnerId,
+    },
+    select: { path: true },
+  });
+
+  let paths = files.map((f) => f.path);
+
+  const subfolders = await prisma.folder.findMany({
+    where: {
+      parentId: numericFolderId,
+      ownerId: numericOwnerId,
+    },
+    select: { id: true },
+  });
+
+  for (const subfolder of subfolders) {
+    const childPaths = await getAllDescendantFilePaths(subfolder.id, ownerId);
+    paths = paths.concat(childPaths);
+  }
+
+  return paths;
+}
 
 async function getFolder({ id, ownerId }) {
   if (!id || !ownerId) return null;
@@ -7,6 +38,9 @@ async function getFolder({ id, ownerId }) {
     where: {
       id: Number(id),
       ownerId: Number(ownerId),
+    },
+    include: {
+      files: true,
     },
   });
 }
@@ -18,6 +52,9 @@ async function getOrCreateRootFolder(ownerId) {
     where: {
       ownerId: numericOwnerId,
       parentId: null,
+    },
+    include: {
+      files: true,
     },
   });
 
@@ -88,6 +125,12 @@ async function deleteFolder({ id, ownerId }) {
     throw new Error("Cannot delete the root folder.");
   }
 
+  const pathsToDelete = await getAllDescendantFilePaths(folder.id, ownerId);
+
+  if (pathsToDelete.length > 0) {
+    await storageAdapter.deleteFile(pathsToDelete);
+  }
+
   return await prisma.folder.delete({
     where: { id: folder.id },
   });
@@ -147,16 +190,22 @@ async function getBreadcrumbs(folderId, ownerId) {
 }
 
 async function getValidMoveDestinations({ folderId, ownerId }) {
-  const targetId = Number(folderId);
-
   const allFolders = await prisma.folder.findMany({
     where: { ownerId: Number(ownerId) },
     select: { id: true, name: true, parentId: true },
   });
 
+  const rootFolder = allFolders.find((f) => f.parentId === null);
+
+  if (!folderId || (rootFolder && Number(folderId) === rootFolder.id)) {
+    return allFolders.filter((f) => f.parentId !== null);
+  }
+
+  const targetId = Number(folderId);
+
   const childrenMap = new Map();
   for (const folder of allFolders) {
-    if (folder.parentId) {
+    if (folder.parentId !== null) {
       if (!childrenMap.has(folder.parentId)) {
         childrenMap.set(folder.parentId, []);
       }
@@ -176,7 +225,9 @@ async function getValidMoveDestinations({ folderId, ownerId }) {
     }
   }
 
-  return allFolders.filter((folder) => !descendantIds.has(folder.id));
+  return allFolders.filter(
+    (folder) => folder.parentId !== null && !descendantIds.has(folder.id),
+  );
 }
 
 module.exports = {

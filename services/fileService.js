@@ -1,103 +1,126 @@
 const prisma = require("../db/prisma.js");
 const { getFolder } = require("./folderService.js");
+const storageAdapter = require("./storage/supabaseStorageAdapter.js");
 
-async function getFileFromFolder({ fileId, folderId, ownerId }) {
-  const folder = await getFolder({ id: folderId, ownerId });
-
-  if (!folder) {
-    throw new Error("Folder not found or unauthorized.");
-  }
-
-  return await prisma.file.findFirst({
+async function getFile({ fileId, ownerId }) {
+  const file = await prisma.file.findFirst({
     where: {
       id: Number(fileId),
-      folderId: Number(folderId),
+      ownerId: Number(ownerId),
     },
   });
+
+  if (!file) {
+    const error = new Error("File not found or unauthorized access.");
+    error.status = 404;
+    throw error;
+  }
+
+  return file;
 }
 
 async function createFileInFolder({ folderId, ownerId, fileData }) {
-  const folder = await getFolder({ id: folderId, ownerId });
+  const targetFolderId = Number(folderId);
+  const numericOwnerId = Number(ownerId);
+
+  const folder = await getFolder({
+    id: targetFolderId,
+    ownerId: numericOwnerId,
+  });
 
   if (!folder) {
-    throw new Error("Folder not found or unauthorized.");
+    const error = new Error("Destination folder not found or unauthorized.");
+    error.status = 404;
+    throw error;
   }
+
+  const existingFile = await prisma.file.findFirst({
+    where: {
+      name: fileData.originalname,
+      folderId: targetFolderId,
+    },
+  });
+
+  if (existingFile) {
+    const error = new Error(
+      `A file named "${fileData.originalname}" already exists in this folder.`,
+    );
+    error.status = 400;
+    throw error;
+  }
+
+  const { path: storedPath } = await storageAdapter.saveFile({
+    file: fileData,
+    ownerId: numericOwnerId,
+  });
 
   return await prisma.file.create({
     data: {
-      name: fileData.name,
-      extension: fileData.extension,
+      name: fileData.originalname,
       size: Number(fileData.size),
-      url: fileData.url || `${folder.url}${fileData.name}`,
-      folderId: Number(folderId),
+      path: storedPath,
+      ownerId: numericOwnerId,
+      folderId: targetFolderId,
     },
   });
 }
 
-async function renameFile({ fileId, folderId, ownerId, newName }) {
-  const file = await getFileFromFolder({ fileId, folderId, ownerId });
+async function renameFile({ fileId, ownerId, newName }) {
+  const file = await getFile({ fileId, ownerId });
 
-  if (!file) {
-    throw new Error("File not found or unauthorized.");
+  const duplicate = await prisma.file.findFirst({
+    where: {
+      name: newName,
+      folderId: file.folderId,
+      NOT: { id: file.id },
+    },
+  });
+
+  if (duplicate) {
+    const error = new Error(
+      `A file named "${newName}" already exists in this folder.`,
+    );
+    error.status = 400;
+    throw error;
   }
 
   return await prisma.file.update({
-    where: { id: Number(fileId) },
+    where: { id: file.id },
     data: { name: newName },
   });
 }
 
-async function moveFileToFolder({
-  fileId,
-  ownerId,
-  originFolderId,
-  destinationFolderId,
-}) {
-  const originFolder = await getFolder({ id: originFolderId, ownerId });
-  if (!originFolder) {
-    throw new Error("Origin folder not found or unauthorized.");
-  }
+async function moveFileToFolder({ fileId, ownerId, destinationFolderId }) {
+  const file = await getFile({ fileId, ownerId });
+  const targetDestId = Number(destinationFolderId);
 
-  const destinationFolder = await getFolder({
-    id: destinationFolderId,
-    ownerId,
-  });
+  const destinationFolder = await getFolder({ id: targetDestId, ownerId });
   if (!destinationFolder) {
-    throw new Error("Destination folder not found or unauthorized.");
-  }
-
-  const file = await getFileFromFolder({
-    fileId,
-    folderId: originFolderId,
-    ownerId,
-  });
-
-  if (!file) {
-    throw new Error("File not found or unauthorized.");
+    const error = new Error("Destination folder not found or unauthorized.");
+    error.status = 404;
+    throw error;
   }
 
   return await prisma.file.update({
-    where: { id: Number(fileId) },
-    data: {
-      folderId: Number(destinationFolderId),
-    },
+    where: { id: file.id },
+    data: { folderId: targetDestId },
   });
 }
 
-async function deleteFile({ fileId, folderId, ownerId }) {
-  const file = await getFileFromFolder({ fileId, folderId, ownerId });
+async function deleteFile({ fileId, ownerId }) {
+  const file = await getFile({ fileId, ownerId });
 
-  if (!file) {
-    throw new Error("File not found or unauthorized.");
-  }
-
-  return await prisma.file.delete({
-    where: { id: Number(fileId) },
+  await prisma.file.delete({
+    where: { id: file.id },
   });
+
+  await storageAdapter.deleteFile(file.path);
+
+  return file;
 }
 
 module.exports = {
-  getFileFromFolder,
+  getFile,
   createFileInFolder,
   renameFile,
   moveFileToFolder,

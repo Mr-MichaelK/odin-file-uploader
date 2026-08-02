@@ -29,16 +29,23 @@
         <%- include('../partials/breadcrumbs', { breadcrumbs }) %>
 
         <div class="action-buttons">
-          <!-- New Folder Form (Inline Dialog trigger or simple button) -->
+          <!-- New Folder Form -->
           <form action="/folders/create" method="POST" class="inline-form">
             <input type="hidden" name="parentFolderId" value="<%= currentFolder ? currentFolder.id : '' %>">
             <input type="text" name="folderName" placeholder="New folder name..." required class="form-input input-sm">
             <button type="submit" class="btn btn-primary btn-sm">+ New Folder</button>
           </form>
+
+          <!-- File Upload Form -->
+          <form action="/files/upload" method="post" enctype="multipart/form-data" class="inline-form">
+            <input type="hidden" name="folderId" value="<%= currentFolder ? currentFolder.id : rootFolder.id %>">
+            <input type="file" name="file" required class="form-input input-sm" />
+            <button type="submit" class="btn btn-primary btn-sm">+ Upload</button>
+          </form>
         </div>
       </div>
 
-      <!-- File & Folder List Container (GitHub Style Box) -->
+      <!-- File & Folder List Container -->
       <div class="box-container">
         
         <!-- Box Header -->
@@ -63,9 +70,8 @@
                   </a>
                 </div>
 
-                <!-- Row Quick Actions -->
+                <!-- Folder Actions -->
                 <div class="item-actions">
-                  <!-- Move Trigger Button -->
                   <button 
                     type="button" 
                     class="btn-icon" 
@@ -75,14 +81,12 @@
                     📦
                   </button>
 
-                  <!-- Rename Form -->
                   <form action="/folders/rename" method="POST" class="inline-form">
                     <input type="hidden" name="folderId" value="<%= folder.id %>">
                     <input type="text" name="newName" value="<%= folder.name %>" required class="form-input input-xs">
                     <button type="submit" class="btn-icon" title="Rename">✏️</button>
                   </form>
 
-                  <!-- Delete Form -->
                   <form action="/folders/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this folder and everything inside?');">
                     <input type="hidden" name="folderId" value="<%= folder.id %>">
                     <button type="submit" class="btn-icon danger" title="Delete">🗑️</button>
@@ -98,14 +102,9 @@
                     
                     <label for="destinationFolderId-<%= folder.id %>">Select destination:</label>
                     <select name="destinationFolderId" id="destinationFolderId-<%= folder.id %>" required class="form-input">
-                      <!-- Root Folder Option -->
                       <option value="<%= rootFolder.id %>">/ (Home)</option>
-                      
-                      <!-- Other Available Folders -->
                       <% validDestinations.filter(d => d.id !== folder.id).forEach(dest => { %>
-                        <option value="<%= dest.id %>">
-                          /<%= dest.name %>
-                        </option>
+                        <option value="<%= dest.id %>">/<%= dest.name %></option>
                       <% }) %>
                     </select>
 
@@ -115,6 +114,58 @@
                     </div>
                   </form>
                 </dialog>
+              </li>
+            <% }) %>
+          <% } %>
+
+          <!-- Render Files -->
+          <% if (files && files.length > 0) { %>
+            <% files.forEach(file => { %>
+              <li class="item-row">
+                <div class="item-main">
+                  <!-- Generic File Icon -->
+                  <svg viewBox="0 0 16 16" width="16" height="16" fill="#6e7781">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l3.414 3.414c.329.328.513.773.513 1.237v9.086A1.75 1.75 0 0 1 12.75 16h-9A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 8.5 4.25V1.5Zm6.25 0v2.75c0 .138.112.25.25.25h2.75L9.75 1.5Z"/>
+                  </svg>
+                  <span class="item-name"><%= file.name %></span>
+                </div>
+
+                <!-- File Actions -->
+                <div class="item-actions">
+                  <!-- Inline Move Dropdown -->
+                  <form action="/files/<%= file.id %>/move" method="POST" class="inline-form">
+                    <select name="destinationFolderId" onchange="this.form.submit()" class="form-input input-xs" title="Move File">
+                      <option value="" disabled selected>Move to...</option>
+
+                      <!-- 1. Show Home (Root) if file is inside a subfolder -->
+                      <% if (currentFolder && currentFolder.id !== rootFolder.id) { %>
+                        <option value="<%= rootFolder.id %>">/ (Home)</option>
+                      <% } %>
+
+                      <!-- 2. Show all valid subfolder destinations -->
+                      <% if (validDestinations && validDestinations.length > 0) { %>
+                        <% validDestinations.forEach(dest => { %>
+                          <% if (!currentFolder || dest.id !== currentFolder.id) { %>
+                            <option value="<%= dest.id %>">/<%= dest.name %></option>
+                          <% } %>
+                        <% }) %>
+                      <% } %>
+                    </select>
+                  </form>
+                  <!-- Download Link -->
+                  <a href="/files/<%= file.id %>/download" class="btn-icon" title="Download">⬇️</a>
+
+                  <!-- Rename Form -->
+                  <form action="/files/<%= file.id %>/rename" method="POST" class="inline-form">
+                    <input type="text" name="newName" value="<%= file.name %>" required class="form-input input-xs">
+                    <button type="submit" class="btn-icon" title="Rename">✏️</button>
+                  </form>
+
+                  <!-- Delete Form -->
+                  <form action="/files/<%= file.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this file?');">
+                    <button type="submit" class="btn-icon danger" title="Delete">🗑️</button>
+                  </form>
+                </div>
               </li>
             <% }) %>
           <% } %>

@@ -30,7 +30,10 @@ async function getFolder(req, res) {
 
   const [folders, validDestinations, breadcrumbs] = await Promise.all([
     getChildFolders({ parentId: currentFolder.id, ownerId }),
-    getValidMoveDestinations({ folderId: currentFolder.id, ownerId }),
+    getValidMoveDestinations({
+      folderId: currentFolder ? currentFolder.id : null,
+      ownerId,
+    }),
     getBreadcrumbs(currentFolder.id, ownerId),
   ]);
 
@@ -39,7 +42,7 @@ async function getFolder(req, res) {
     rootFolder,
     folders,
     validDestinations,
-    files: [],
+    files: currentFolder.files,
     breadcrumbs,
   });
 }
