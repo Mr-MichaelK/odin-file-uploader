@@ -4,42 +4,68 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login | Odin Files</title>
+    <link rel="stylesheet" href="/css/style.css" />
   </head>
   <body>
-    <h1>Login</h1>
+    <header class="app-header">
+      <a href="/" class="brand">
+        Odin Files
+      </a>
+    </header>
 
-    <% if (locals.errors && errors.length > 0) { %>
-        <ul>
+    <main class="main-content">
+      <div class="auth-container">
+        <div class="auth-header">
+          <h1>Log in to Odin Files</h1>
+        </div>
+
+        <% if (locals.errors && errors.length > 0) { %>
+          <ul class="error-list">
             <% errors.forEach(error => { %>
-                <li style="color: red;"><%= typeof error === 'object' ? error.msg : error %></li>
+              <li><%= typeof error === 'object' ? error.msg : error %></li>
             <% }); %>
-        </ul>
-    <% } %>
+          </ul>
+        <% } %>
 
-    <form action="/login" method="post">
-      <div>
-        <label for="email">Email:</label>
-        <input
-          type="email"
-          name="email"
-          id="email"
-          value="<%= locals.formData?.email || '' %>"
-          required
-        />
-      </div>
-      <div>
-        <label for="password">Password:</label>
-        <input
-          type="password"
-          name="password"
-          id="password"
-          required
-        />
-      </div>
-      <button type="submit">Submit</button>
-    </form>
+        <div class="auth-card">
+          <form action="/login" method="post">
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                class="form-input"
+                value="<%= locals.formData?.email || '' %>"
+                required
+              />
+            </div>
 
-    <br>
-    <a href="/sign-up">Don't have an account? Sign up!</a>
+            <div class="form-group">
+              <label for="password">Password</label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                class="form-input"
+                required
+              />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">
+              Log In
+            </button>
+          </form>
+        </div>
+
+        <p class="auth-footer">
+          New to Odin Files? <a href="/sign-up">Create an account</a>.
+        </p>
+      </div>
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; Mr-MichaelK. Built with Express, Prisma, and Passport.</p>
+    </footer>
   </body>
 </html>
