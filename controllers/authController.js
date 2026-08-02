@@ -57,7 +57,11 @@ exports.postSignUp = async (req, res, next) => {
 
   req.login(user, (err) => {
     if (err) return next(err);
-    return res.redirect("/");
+
+    req.session.save((saveErr) => {
+      if (saveErr) return next(saveErr);
+      return res.redirect("/folders");
+    });
   });
 };
 
