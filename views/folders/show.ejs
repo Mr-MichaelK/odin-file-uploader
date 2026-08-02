@@ -28,19 +28,19 @@
       <div class="view-header">
         <%- include('../partials/breadcrumbs', { breadcrumbs }) %>
 
-        <div class="action-buttons">
+        <div class="action-buttons" style="display: flex; align-items: center; gap: 12px;">
           <!-- New Folder Form -->
           <form action="/folders/create" method="POST" class="inline-form">
             <input type="hidden" name="parentFolderId" value="<%= currentFolder ? currentFolder.id : '' %>">
             <input type="text" name="folderName" placeholder="New folder name..." required class="form-input input-sm">
-            <button type="submit" class="btn btn-primary btn-sm">+ New Folder</button>
+            <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">+ New Folder</button>
           </form>
 
           <!-- File Upload Form -->
           <form action="/files/upload" method="post" enctype="multipart/form-data" class="inline-form">
             <input type="hidden" name="folderId" value="<%= currentFolder ? currentFolder.id : rootFolder.id %>">
-            <input type="file" name="file" required class="form-input input-sm" />
-            <button type="submit" class="btn btn-primary btn-sm">+ Upload</button>
+            <input type="file" name="file" required class="form-input input-sm" style="max-width: 200px;" />
+            <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">+ Upload</button>
           </form>
         </div>
       </div>
