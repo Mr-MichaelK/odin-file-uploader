@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= currentFolder ? currentFolder.name : 'Dashboard' %> - Odin Files</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- Header / Navbar -->
+    <header class="app-header">
+      <div class="brand">
+        <svg viewBox="0 0 16 16" width="20" height="20" fill="currentColor">
+          <path d="M2 2.5A1.5 1.5 0 0 1 3.5 1h3.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A.5.5 0 0 0 9.586 3H12.5A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-9z"/>
+        </svg>
+        <span>Odin Files</span>
+      </div>
+      <form action="/logout" method="post">
+        <button type="submit" class="btn btn-outline btn-sm">Log out</button>
+      </form>
+    </header>
+
+    <main class="main-content">
+      
+      <!-- Top Action Bar -->
+      <div class="view-header">
+        <%- include('../partials/breadcrumbs', { breadcrumbs }) %>
+
+        <div class="action-buttons" style="display: flex; align-items: center; gap: 12px;">
+          <!-- New Folder Form -->
+          <form action="/folders/create" method="POST" class="inline-form">
+            <input type="hidden" name="parentFolderId" value="<%= currentFolder ? currentFolder.id : '' %>">
+            <input type="text" name="folderName" placeholder="New folder name..." required class="form-input input-sm">
+            <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">+ New Folder</button>
+          </form>
+
+          <!-- File Upload Form -->
+          <form action="/files/upload" method="post" enctype="multipart/form-data" class="inline-form">
+            <input type="hidden" name="folderId" value="<%= currentFolder ? currentFolder.id : rootFolder.id %>">
+            <input type="file" name="file" required class="form-input input-sm" style="max-width: 200px;" />
+            <button type="submit" class="btn btn-primary btn-sm" style="white-space: nowrap;">+ Upload</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- File & Folder List Container -->
+      <div class="box-container">
+        
+        <!-- Box Header -->
+        <div class="box-header">
+          <span class="box-title">Name</span>
+          <span class="box-meta">Actions</span>
+        </div>
+
+        <!-- Box Body / Items -->
+        <ul class="item-list">
+          
+          <!-- Render Child Folders -->
+          <% if (folders && folders.length > 0) { %>
+            <% folders.forEach(folder => { %>
+              <li class="item-row">
+                <div class="item-main">
+                  <svg class="icon-folder-filled" viewBox="0 0 16 16" width="16" height="16">
+                    <path fill="#54a3ff" d="M2 2.5A1.5 1.5 0 0 1 3.5 1h3.086a1.5 1.5 0 0 1 1.06.44l1.415 1.414A.5.5 0 0 0 9.586 3H12.5A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-9z"/>
+                  </svg>
+                  <a href="/folders/<%= folder.id %>" class="item-name">
+                    <%= folder.name %>
+                  </a>
+                </div>
+
+                <!-- Folder Actions -->
+                <div class="item-actions">
+                  <button 
+                    type="button" 
+                    class="btn-icon" 
+                    title="Move Folder"
+                    onclick="document.getElementById('move-folder-modal-<%= folder.id %>').showModal()"
+                  >
+                    📦
+                  </button>
+
+                  <form action="/folders/rename" method="POST" class="inline-form">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    <input type="text" name="newName" value="<%= folder.name %>" required class="form-input input-xs">
+                    <button type="submit" class="btn-icon" title="Rename">✏️</button>
+                  </form>
+
+                  <form action="/folders/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this folder and everything inside?');">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    <button type="submit" class="btn-icon danger" title="Delete">🗑️</button>
+                  </form>
+                </div>
+
+                <!-- Move Folder Modal Dialog -->
+                <dialog id="move-folder-modal-<%= folder.id %>" class="move-modal">
+                  <form action="/folders/move" method="POST" class="modal-form">
+                    <input type="hidden" name="folderId" value="<%= folder.id %>">
+                    
+                    <h3>Move "<%= folder.name %>"</h3>
+                    
+                    <label for="destinationFolderId-<%= folder.id %>">Select destination:</label>
+                    <select name="destinationFolderId" id="destinationFolderId-<%= folder.id %>" required class="form-input">
+                      <option value="<%= rootFolder.id %>">/ (Home)</option>
+                      <% validDestinations.filter(d => d.id !== folder.id).forEach(dest => { %>
+                        <option value="<%= dest.id %>">/<%= dest.name %></option>
+                      <% }) %>
+                    </select>
+
+                    <div class="modal-buttons">
+                      <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('move-folder-modal-<%= folder.id %>').close()">Cancel</button>
+                      <button type="submit" class="btn btn-sm btn-primary">Move Here</button>
+                    </div>
+                  </form>
+                </dialog>
+              </li>
+            <% }) %>
+          <% } %>
+
+          <!-- Render Files -->
+          <% if (files && files.length > 0) { %>
+            <% files.forEach(file => { %>
+              <li class="item-row">
+                <div class="item-main">
+                  <!-- Generic File Icon -->
+                  <svg viewBox="0 0 16 16" width="16" height="16" fill="#6e7781">
+                    <path d="M2 1.75C2 .784 2.784 0 3.75 0h5.586c.464 0 .909.184 1.237.513l3.414 3.414c.329.328.513.773.513 1.237v9.086A1.75 1.75 0 0 1 12.75 16h-9A1.75 1.75 0 0 1 2 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v12.5c0 .138.112.25.25.25h9a.25.25 0 0 0 .25-.25V6h-2.75A1.75 1.75 0 0 1 8.5 4.25V1.5Zm6.25 0v2.75c0 .138.112.25.25.25h2.75L9.75 1.5Z"/>
+                  </svg>
+                  <span class="item-name"><%= file.name %></span>
+                </div>
+
+                <!-- File Actions -->
+                <div class="item-actions">
+                  <!-- Inline Move Dropdown -->
+                  <form action="/files/<%= file.id %>/move" method="POST" class="inline-form">
+                    <select name="destinationFolderId" onchange="this.form.submit()" class="form-input input-xs" title="Move File">
+                      <option value="" disabled selected>Move to...</option>
+
+                      <!-- 1. Show Home (Root) if file is inside a subfolder -->
+                      <% if (currentFolder && currentFolder.id !== rootFolder.id) { %>
+                        <option value="<%= rootFolder.id %>">/ (Home)</option>
+                      <% } %>
+
+                      <!-- 2. Show all valid subfolder destinations -->
+                      <% if (validDestinations && validDestinations.length > 0) { %>
+                        <% validDestinations.forEach(dest => { %>
+                          <% if (!currentFolder || dest.id !== currentFolder.id) { %>
+                            <option value="<%= dest.id %>">/<%= dest.name %></option>
+                          <% } %>
+                        <% }) %>
+                      <% } %>
+                    </select>
+                  </form>
+                  <!-- Download Link -->
+                  <a href="/files/<%= file.id %>/download" class="btn-icon" title="Download">⬇️</a>
+
+                  <!-- Rename Form -->
+                  <form action="/files/<%= file.id %>/rename" method="POST" class="inline-form">
+                    <input type="text" name="newName" value="<%= file.name %>" required class="form-input input-xs">
+                    <button type="submit" class="btn-icon" title="Rename">✏️</button>
+                  </form>
+
+                  <!-- Delete Form -->
+                  <form action="/files/<%= file.id %>/delete" method="POST" class="inline-form" onsubmit="return confirm('Delete this file?');">
+                    <button type="submit" class="btn-icon danger" title="Delete">🗑️</button>
+                  </form>
+                </div>
+              </li>
+            <% }) %>
+          <% } %>
+
+          <!-- Empty State -->
+          <% if ((!folders || folders.length === 0) && (!files || files.length === 0)) { %>
+            <li class="empty-state">
+              <p>This folder is empty.</p>
+            </li>
+          <% } %>
+        
+        </ul>
+      </div>
+
+    </main>
+  </div>
+
+</body>
+</html>

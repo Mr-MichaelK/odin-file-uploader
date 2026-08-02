@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Odin Files | Secure Cloud Storage</title>
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <a href="/" class="brand">
+        Odin Files
+      </a>
+    </header>
+
+    <main class="main-content">
+      <section class="hero-section">
+        <h1 class="hero-title">Odin Files</h1>
+        <p class="hero-subtitle">
+          Simple, fast, and secure personal file storage.
+        </p>
+        <p>
+          Organize your documents, store files in nested directories, and access your personal drive with built-in security and instant management.
+        </p>
+      </section>
+
+      <section>
+        <% if (locals.user) { %>
+          <div class="card landing-card">
+            <h3>Welcome back!</h3>
+            <p>You are currently signed in as <strong><%= user.email %></strong>.</p>
+            <a href="/folders" class="btn btn-primary">
+              Go to Dashboard &rarr;
+            </a>
+          </div>
+        <% } else { %>
+          <div class="card landing-card">
+            <h3>Get Started</h3>
+            <p>Ready to upload? Sign in or create a new account to start managing your files.</p>
+            <div class="cta-actions">
+              <a href="/login" class="btn btn-outline">Log In</a>
+              <a href="/sign-up" class="btn btn-primary">Sign Up</a>
+            </div>
+          </div>
+        <% } %>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <p>&copy; Mr-MichaelK. Built with Express, Prisma, and Passport.</p>
+    </footer>
+  </body>
+</html>

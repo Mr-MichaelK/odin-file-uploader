@@ -1,0 +1,24 @@
+<!-- Modal for Moving Folder -->
+<dialog id="move-folder-modal-<%= folder.id %>" class="move-modal">
+  <form method="POST" action="/folders/<%= folder.id %>/move">
+    <h3>Move "<%= folder.name %>" to...</h3>
+
+    <label for="destinationFolderId">Select Target Directory:</label>
+    <select name="destinationFolderId" required>
+      <!-- Root option -->
+      <option value="<%= rootFolder.id %>">/ (Home)</option>
+
+      <!-- Render candidate folders (excluding current folder and its children) -->
+      <% validDestinations.forEach(dest => { %>
+        <option value="<%= dest.id %>">
+          /<%= dest.pathName %>
+        </option>
+      <% }) %>
+    </select>
+
+    <div class="modal-actions">
+      <button type="button" onclick="document.getElementById('move-folder-modal-<%= folder.id %>').close()">Cancel</button>
+      <button type="submit" class="btn-primary">Move</button>
+    </div>
+  </form>
+</dialog>
